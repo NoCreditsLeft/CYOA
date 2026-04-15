@@ -24,6 +24,11 @@ export default function Pages() {
   async function generate() {
     setBusy(true); setErr('');
     try {
+      // If there's a current draft, discard it first (regenerate semantics).
+      const existingDraft = pages.find((p) => p.status === 'draft');
+      if (existingDraft) {
+        await api.discardPage(existingDraft.id);
+      }
       await api.generatePage(steering.trim() || undefined);
       setSteering('');
       await load();
@@ -35,6 +40,14 @@ export default function Pages() {
     setErr('');
     try {
       await api.lockPage(page.id, option);
+      await load();
+    } catch (e) { setErr(e.message); }
+  }
+
+  async function discard(page) {
+    setErr('');
+    try {
+      await api.discardPage(page.id);
       await load();
     } catch (e) { setErr(e.message); }
   }
@@ -60,20 +73,22 @@ export default function Pages() {
     <div style={{ marginTop: 32 }}>
       <h2 style={{ marginBottom: 8 }}>Pages {episode && <span style={{ opacity: 0.5, fontSize: 14, fontWeight: 400 }}>· {episode.title}</span>}</h2>
 
-      {!draft && (
-        <div style={{ marginBottom: 16 }}>
-          <textarea
-            value={steering}
-            onChange={(e) => setSteering(e.target.value)}
-            placeholder="Optional steering: tone, a beat you want hit, a character to feature, etc."
-            rows={2}
-            style={textarea}
-          />
-          <button onClick={generate} disabled={busy} style={btn}>
-            {busy ? 'Generating…' : 'Generate next page'}
-          </button>
-        </div>
-      )}
+      <div style={{ marginBottom: 16 }}>
+        <textarea
+          value={steering}
+          onChange={(e) => setSteering(e.target.value)}
+          placeholder={draft
+            ? "Steering for a fresh draft (the current draft will be discarded)"
+            : "Optional steering: tone, a beat you want hit, a character to feature, etc."}
+          rows={2}
+          style={textarea}
+        />
+        <button onClick={generate} disabled={busy} style={btn}>
+          {busy
+            ? (draft ? 'Regenerating…' : 'Generating…')
+            : (draft ? 'Regenerate draft' : 'Generate next page')}
+        </button>
+      </div>
 
       {err && <p style={{ color: '#ff6b6b', fontSize: 13 }}>{err}</p>}
 
@@ -97,7 +112,12 @@ export default function Pages() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={chip}>Page {p.sequence}</span>
                   <span style={{ ...chip, color: p.status === 'draft' ? '#2b6cb0' : '#718096' }}>{p.status}</span>
-                  <button onClick={() => copyPage(p)} style={{ ...ghostBtn, marginLeft: 'auto' }}>
+                  {p.status === 'draft' && (
+                    <button onClick={() => discard(p)} style={{ ...ghostBtn, marginLeft: 'auto', color: '#ff6b6b', borderColor: '#663' }}>
+                      Discard
+                    </button>
+                  )}
+                  <button onClick={() => copyPage(p)} style={{ ...ghostBtn, marginLeft: p.status === 'draft' ? 8 : 'auto' }}>
                     {copiedId === p.id ? 'Copied ✓' : 'Copy'}
                   </button>
                 </div>

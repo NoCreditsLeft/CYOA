@@ -35,4 +35,5 @@ export const api = {
   listPages: () => request('/api/pages'),
   generatePage: (steering) => request('/api/pages/generate', { method: 'POST', body: { steering } }),
   lockPage: (id, chosen_option) => request('/api/pages/lock', { method: 'POST', body: { id, chosen_option } }),
+  discardPage: (id) => request('/api/pages/discard', { method: 'POST', body: { id } }),
 };
