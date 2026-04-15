@@ -51,8 +51,10 @@ export default async function handler(req, res) {
       max_tokens: 512,
     });
 
+    // Strip optional ```json ... ``` fences before parsing.
+    const cleaned = out.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     let parsed;
-    try { parsed = JSON.parse(out); }
+    try { parsed = JSON.parse(cleaned); }
     catch { res.status(502).json({ error: 'Claude returned non-JSON', raw: out }); return; }
 
     if (!CATEGORIES.includes(parsed.category)) {
