@@ -31,4 +31,8 @@ export const api = {
   listCanon: () => request('/api/canon'),
   addBreadcrumb: (text) => request('/api/canon/breadcrumb', { method: 'POST', body: { text } }),
   deleteCanon: (id) => request(`/api/canon?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  listPages: () => request('/api/pages'),
+  generatePage: (steering) => request('/api/pages/generate', { method: 'POST', body: { steering } }),
+  lockPage: (id, chosen_option) => request('/api/pages/lock', { method: 'POST', body: { id, chosen_option } }),
 };

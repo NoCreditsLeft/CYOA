@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, session } from './lib/api.js';
 import FontOfTruth from './FontOfTruth.jsx';
+import Pages from './Pages.jsx';
 
 export default function App() {
   const [me, setMe] = useState(null);       // { wallet, role } when signed in
@@ -71,6 +72,7 @@ export default function App() {
           <button onClick={signOut} style={btn}>Sign out</button>
 
           <FontOfTruth />
+          <Pages />
         </div>
       )}
 
