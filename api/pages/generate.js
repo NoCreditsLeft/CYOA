@@ -125,6 +125,7 @@ ${steering ? `LOREMASTER STEERING\n${steering}\n\n` : ''}Generate the next page.
         content: parsed.content,
         options: parsed.options,
         status: 'draft',
+        facts_used: (facts || []).map((f) => f.id),
       })
       .select()
       .single();

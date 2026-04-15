@@ -36,4 +36,7 @@ export const api = {
   generatePage: (steering) => request('/api/pages/generate', { method: 'POST', body: { steering } }),
   lockPage: (id, chosen_option) => request('/api/pages/lock', { method: 'POST', body: { id, chosen_option } }),
   discardPage: (id) => request('/api/pages/discard', { method: 'POST', body: { id } }),
+
+  getStyle: () => request('/api/style'),
+  saveStyle: (patch) => request('/api/style', { method: 'PUT', body: patch }),
 };

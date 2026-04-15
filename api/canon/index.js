@@ -23,23 +23,19 @@ export default async function handler(req, res) {
     const id = req.query.id;
     if (!id) { res.status(400).json({ error: 'Missing id' }); return; }
 
-    // Check if any locked/canonical page's generation referenced this fact.
-    const { data: uses, error: useErr } = await admin
-      .from('generations')
-      .select('id, page_id, pages(status)')
+    // Block delete if any locked/canonical page was generated using this fact.
+    const { data: lockedUses, error: useErr } = await admin
+      .from('pages')
+      .select('id, sequence, status, episode_id')
       .contains('facts_used', [id])
-      .limit(50);
+      .in('status', ['locked', 'canonical']);
 
     if (useErr) { res.status(500).json({ error: useErr.message }); return; }
 
-    const lockedUses = (uses || []).filter(
-      (u) => u.pages && (u.pages.status === 'locked' || u.pages.status === 'canonical')
-    );
-
-    if (lockedUses.length > 0) {
+    if (lockedUses && lockedUses.length > 0) {
       res.status(409).json({
-        error: 'Fact is referenced by locked pages',
-        locked_uses: lockedUses.map((u) => ({ page_id: u.page_id })),
+        error: 'Fact is baked into locked pages',
+        locked_uses: lockedUses.map((p) => ({ page_id: p.id, sequence: p.sequence })),
       });
       return;
     }
