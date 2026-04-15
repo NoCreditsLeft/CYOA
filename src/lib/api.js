@@ -8,7 +8,7 @@ export const session = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
-async function request(path, { method = 'GET', body } = {}) {
+async function request(path, { method = 'GET', body, returnErrorBody = false } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   const token = session.get();
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -19,7 +19,15 @@ async function request(path, { method = 'GET', body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+  if (!res.ok) {
+    if (returnErrorBody) {
+      const err = new Error(json.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.body = json;
+      throw err;
+    }
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
   return json;
 }
 
@@ -29,7 +37,9 @@ export const api = {
   me: () => request('/api/auth/me'),
 
   listCanon: () => request('/api/canon'),
-  addBreadcrumb: (text) => request('/api/canon/breadcrumb', { method: 'POST', body: { text } }),
+  addBreadcrumb: (text) => request('/api/canon/breadcrumb', { method: 'POST', body: { text }, returnErrorBody: true }),
+  resolveBreadcrumb: (text, parsed, resolution) =>
+    request('/api/canon/breadcrumb', { method: 'POST', body: { text, parsed, resolution } }),
   deleteCanon: (id) => request(`/api/canon?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   listPages: () => request('/api/pages'),
