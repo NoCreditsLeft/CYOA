@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   const { data: episode, error: epErr } = await admin
     .from('episodes')
-    .select('id, number, title, status')
+    .select('id, number, title, goal, status')
     .eq('status', 'active')
     .order('number', { ascending: true })
     .limit(1)

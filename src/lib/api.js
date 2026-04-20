@@ -49,4 +49,12 @@ export const api = {
 
   getStyle: () => request('/api/style'),
   saveStyle: (patch) => request('/api/style', { method: 'PUT', body: patch }),
+
+  setEpisodeGoal: (goal) => request('/api/episodes/goal', { method: 'PUT', body: { goal } }),
+
+  listChapters: () => request('/api/chapters'),
+  proposeChapter: (steering) => request('/api/chapters/propose', { method: 'POST', body: { steering } }),
+  activateChapter: (id) => request('/api/chapters', { method: 'POST', body: { id } }),
+  completeChapter: (id, summary) => request('/api/chapters', { method: 'PUT', body: { id, summary } }),
+  deleteChapter: (id) => request(`/api/chapters/delete?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

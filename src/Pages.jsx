@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './lib/api.js';
 
-export default function Pages() {
+export default function Pages({ onEpisodeLoad }) {
   const [episode, setEpisode] = useState(null);
   const [pages, setPages] = useState([]);
   const [steering, setSteering] = useState('');
@@ -13,6 +13,7 @@ export default function Pages() {
     try {
       const r = await api.listPages();
       setEpisode(r.episode);
+      onEpisodeLoad?.(r.episode);
       setPages(r.pages || []);
     } catch (e) {
       setErr(e.message);

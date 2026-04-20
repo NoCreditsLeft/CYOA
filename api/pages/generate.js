@@ -14,9 +14,12 @@ Rules:
 - Output must be a single JSON object with exactly these keys: "content" (string), "options" (array of 2 or 3 short strings).
 - "content" is the next page of narrative. A few paragraphs, suitable to read aloud in 1–2 minutes. No headings.
 - "options" are the distinct directions the community will vote on. Each option is one short sentence.
+- ALL options must plausibly lead toward the CHAPTER GOAL. The community chooses HOW, not WHETHER, the story progresses.
 - Never contradict any Absolute canon fact. Treat Strong facts as firmly established. Treat Soft facts as tendencies.
 - Respect the locked story so far as immutable history.
 - Do not name the player ("you"). The community steers characters from the outside.
+- Pace the chapter: if it's early pages, build and explore. If late pages, converge toward the chapter goal.
+- Keep the EPISODE GOAL in mind as the ultimate destination — don't resolve it in a single chapter.
 - Output JSON only. No markdown fences, no prose outside the JSON.`;
 
 export default async function handler(req, res) {
@@ -30,7 +33,7 @@ export default async function handler(req, res) {
   // Current active episode
   const { data: episode, error: epErr } = await admin
     .from('episodes')
-    .select('id, number, title, checkpoints, status')
+    .select('id, number, title, goal, status')
     .eq('status', 'active')
     .order('number', { ascending: true })
     .limit(1)
@@ -52,6 +55,30 @@ export default async function handler(req, res) {
     .eq('episode_id', episode.id)
     .in('status', ['locked', 'canonical'])
     .order('sequence', { ascending: true });
+
+  // Active chapter
+  const { data: chapter } = await admin
+    .from('chapters')
+    .select('id, sequence, title, goal')
+    .eq('episode_id', episode.id)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  // Count pages in current chapter so far
+  const chapterPageCount = chapter ? (
+    await admin
+      .from('pages')
+      .select('id', { count: 'exact', head: true })
+      .eq('chapter_id', chapter.id)
+      .in('status', ['locked', 'canonical'])
+  ).count || 0 : 0;
+
+  // Total chapters for pacing
+  const { count: completedChapters } = await admin
+    .from('chapters')
+    .select('id', { count: 'exact', head: true })
+    .eq('episode_id', episode.id)
+    .eq('status', 'complete');
 
   // Style guide
   const { data: style } = await admin.from('style_guide').select('*').eq('id', 1).maybeSingle();
@@ -75,8 +102,23 @@ export default async function handler(req, res) {
     ].filter(Boolean).join('\n') :
     '(no style guide yet — use clear, vivid, slightly cinematic prose)';
 
+  const goalBlock = episode.goal
+    ? `EPISODE GOAL (ultimate destination): ${episode.goal}`
+    : '(no episode goal set)';
+
+  const chapterBlock = chapter
+    ? `CURRENT CHAPTER: Ch ${chapter.sequence} — "${chapter.title}"
+CHAPTER GOAL: ${chapter.goal}
+Pages in this chapter so far: ${chapterPageCount} (target ~10 per chapter)
+Chapters completed: ${completedChapters || 0} of ~10`
+    : '(no active chapter — generating without chapter context)';
+
   const userMsg = `STYLE
 ${styleBlock}
+
+${goalBlock}
+
+${chapterBlock}
 
 CANON (facts that must hold)
 ${factBlock}
@@ -121,6 +163,7 @@ ${steering ? `LOREMASTER STEERING\n${steering}\n\n` : ''}Generate the next page.
       .from('pages')
       .insert({
         episode_id: episode.id,
+        chapter_id: chapter?.id || null,
         sequence: nextSeq,
         content: parsed.content,
         options: parsed.options,

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api, session } from './lib/api.js';
+import Chapters from './Chapters.jsx';
 import FontOfTruth from './FontOfTruth.jsx';
 import Pages from './Pages.jsx';
 import StyleGuide from './StyleGuide.jsx';
 
 export default function App() {
   const [me, setMe] = useState(null);       // { wallet, role } when signed in
+  const [episode, setEpisode] = useState(null); // active episode
   const [status, setStatus] = useState(''); // status / error text
   const [busy, setBusy] = useState(false);
 
@@ -73,8 +75,9 @@ export default function App() {
           <button onClick={signOut} style={btn}>Sign out</button>
 
           <StyleGuide />
+          <Chapters episode={episode} onEpisodeUpdate={setEpisode} />
           <FontOfTruth />
-          <Pages />
+          <Pages onEpisodeLoad={setEpisode} />
         </div>
       )}
 
