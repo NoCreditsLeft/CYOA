@@ -60,12 +60,29 @@ export default async function handler(req, res) {
     return;
   }
 
-  // ---------- PUT: complete ----------
+  // ---------- PUT: complete (commit to lore) ----------
   if (req.method === 'PUT') {
     const { id, summary } = req.body || {};
     if (!id) { res.status(400).json({ error: 'Missing chapter id' }); return; }
 
-    const updates = { status: 'complete', completed_at: new Date().toISOString() };
+    // Build lore_text from all locked/canonical pages in this chapter
+    const { data: chapterPages } = await admin
+      .from('pages')
+      .select('sequence, content, choices(chosen_option)')
+      .eq('chapter_id', id)
+      .in('status', ['locked', 'canonical'])
+      .order('sequence', { ascending: true });
+
+    const loreText = (chapterPages || []).map((p) => {
+      const chosen = p.choices?.[0]?.chosen_option;
+      return p.content + (chosen ? `\n\n> The community chose: "${chosen}"` : '');
+    }).join('\n\n---\n\n');
+
+    const updates = {
+      status: 'complete',
+      completed_at: new Date().toISOString(),
+      lore_text: loreText || null,
+    };
     if (summary) updates.summary = summary;
 
     const { data, error } = await admin

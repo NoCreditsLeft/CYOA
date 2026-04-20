@@ -19,6 +19,7 @@ const categoryLabel = {
 
 export default function FontOfTruth() {
   const [facts, setFacts] = useState([]);
+  const [filter, setFilter] = useState('all');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -83,11 +84,33 @@ export default function FontOfTruth() {
 
       {err && <p style={{ color: '#ff6b6b', fontSize: 13 }}>{err}</p>}
 
+      {/* Category filter */}
+      {facts.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          {['all', ...Object.keys(categoryLabel)].map((cat) => {
+            const count = cat === 'all' ? facts.length : facts.filter((f) => f.category === cat).length;
+            if (cat !== 'all' && count === 0) return null;
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                style={{
+                  ...filterBtn,
+                  ...(filter === cat ? filterBtnActive : {}),
+                }}
+              >
+                {cat === 'all' ? 'All' : categoryLabel[cat]} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {facts.length === 0 ? (
         <p style={{ opacity: 0.5, fontSize: 13 }}>No canon yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {facts.map((f) => (
+          {facts.filter((f) => filter === 'all' || f.category === filter).map((f) => (
             <li key={f.id} style={row}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
                 <span style={{ ...chip, borderColor: weightColor[f.weight] || '#555', color: weightColor[f.weight] || '#aaa' }}>
@@ -243,6 +266,13 @@ const overlay = {
 const modal = {
   width: 560, maxWidth: '92vw', maxHeight: '90vh', overflowY: 'auto',
   padding: 20, background: '#0d0d0d', border: '1px solid #333', borderRadius: 8,
+};
+const filterBtn = {
+  padding: '4px 12px', background: 'transparent', color: '#888',
+  border: '1px solid #333', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+};
+const filterBtnActive = {
+  color: '#e8e8e8', borderColor: '#2b6cb0', background: '#1a2a3a',
 };
 const textarea = {
   width: '100%', padding: 10, fontSize: 14, fontFamily: 'inherit',

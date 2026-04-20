@@ -125,8 +125,8 @@ export default function Chapters({ episode, onEpisodeUpdate }) {
                   </>
                 )}
                 {ch.status === 'active' && (
-                  <button onClick={() => complete(ch.id)} disabled={busy} style={{ ...btn, background: '#2d3748' }}>
-                    {busy ? '…' : 'Complete Chapter'}
+                  <button onClick={() => complete(ch.id)} disabled={busy} style={{ ...btn, background: '#38a169' }}>
+                    {busy ? '…' : 'Commit to Lore'}
                   </button>
                 )}
               </div>
