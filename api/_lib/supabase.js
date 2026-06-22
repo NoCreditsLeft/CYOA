@@ -10,7 +10,10 @@ if (!url || !secret) {
   throw new Error('Missing VITE_SUPABASE_URL or SUPABASE_SECRET_KEY');
 }
 
+// Per-IP schema; defaults to `cyoa` (Nibbles) when CYOA_SCHEMA unset.
+const schema = process.env.VITE_CYOA_SCHEMA || 'cyoa';
+
 export const admin = createClient(url, secret, {
-  db: { schema: 'cyoa' },
+  db: { schema },
   auth: { persistSession: false, autoRefreshToken: false },
 });

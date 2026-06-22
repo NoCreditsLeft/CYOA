@@ -7,8 +7,11 @@ if (!url || !anonKey) {
   throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env.local');
 }
 
-// Scoped to the `cyoa` schema so every from() / rpc() hits our tables.
+// Scoped to a per-IP schema so every from() / rpc() hits the right tables.
+// Defaults to `cyoa` (Nibbles) when VITE_CYOA_SCHEMA is unset.
+const schema = import.meta.env.VITE_CYOA_SCHEMA || 'cyoa';
+
 export const supabase = createClient(url, anonKey, {
-  db: { schema: 'cyoa' },
+  db: { schema },
   auth: { persistSession: true, autoRefreshToken: true },
 });
